@@ -74,3 +74,4 @@ class VerifyCodeView(APIView):
         refresh = RefreshToken.for_user(user)
 
         return Response({"success": True,"message": "Tasdiqlandi","tokens": {"refresh": str(refresh),"access": str(refresh.access_token),},},status=status.HTTP_200_OK,)
+
