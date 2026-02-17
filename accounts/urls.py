@@ -25,3 +25,5 @@ urlpatterns = [
     path("password/forgot/", ForgotPasswordView.as_view()),
     path("password/reset/", ResetPasswordView.as_view()),
 ]
+
+
