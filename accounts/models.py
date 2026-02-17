@@ -8,7 +8,8 @@ from config.settings import EMAIL_EXPIRATION_TIME,PHONE_EXPIRATION_TIME
 import random
 from rest_framework_simplejwt.tokens import RefreshToken
 import uuid
-# Create your models here.
+
+
 ORDINARY_USER, MANAGER, ADMIN = ('ORDINARY_USER', 'MANAGER', 'ADMIN')
 NEW,CODE_VERIFY,DONE,PHOTO_DONE = ('NEW','CODE_VERIFY','DONE','PHOTO_DONE')
 VIA_EMAIL,VIA_PHONE = ('VIA_EMAIL','VIA_PHONE')
@@ -25,11 +26,12 @@ class CustomUser(AbstractUser,BaseModel):
         (DONE,DONE),
         (PHOTO_DONE,PHOTO_DONE),
     ]
-    UER_AUTH_TYPE = [
+    USER_AUTH_TYPE = [
         (VIA_EMAIL,VIA_EMAIL),
         (VIA_PHONE,VIA_PHONE),
     ]
     user_role = models.CharField(max_length=20,choices=USER_ROLE,default=ORDINARY_USER)
+    user_auth_type = models.CharField(max_length=20,choices=USER_AUTH_TYPE )
     user_status = models.CharField(max_length=20,choices=USER_STATUS,default=NEW)
     email = models.EmailField(unique=True,blank=True,null=True)
     phone_number = models.CharField(max_length=13,unique=True,blank=True,null=True)
@@ -38,10 +40,10 @@ class CustomUser(AbstractUser,BaseModel):
     def __str__(self):
         return self.username
 
-    def create_code(self, verify_type=VIA_EMAIL):
+    def create_verify_code(self, verify_type=VIA_EMAIL):
         code = ''.join([str(random.randint(1000, 9999))[-1] for _ in range(4)])
         CodeVerify.objects.create(user=self, code=code, verify_type=verify_type)
-        print(f'--------------------------{code}')
+        # print(f'--------------------------{code}')
         return code
 
     def check_username(self):
@@ -56,13 +58,19 @@ class CustomUser(AbstractUser,BaseModel):
             self.email = self.email.lower()
 
     def check_pass(self):
-        # ВАЖНО: у AbstractUser.password почти всегда НЕ пустой, но оставим логику как ты хотел
         if not self.password:
             temp_password = 'password' + uuid.uuid4().__str__().split('-')[-1]
             self.password = temp_password
 
+    def token(self):
+        refresh = RefreshToken.for_user(self)
+        data = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+        return data
+
     def hash_pass(self):
-        # чтобы не перехешировать уже захешированный пароль
         if self.password and not self.password.startswith("pbkdf2_"):
             self.set_password(self.password)
 
@@ -75,12 +83,6 @@ class CustomUser(AbstractUser,BaseModel):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
-
-
-
-
-
-
 
 
 class CodeVerify(BaseModel):
