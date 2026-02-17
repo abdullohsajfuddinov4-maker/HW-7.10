@@ -1,12 +1,13 @@
-from django.utils import timezone
+from django.utils import timezone,datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from baseapp.utility import check_email_or_phone
-from .models import CustomUser, CodeVerify, VIA_EMAIL, VIA_PHONE, DONE
+from .models import CustomUser, CodeVerify, VIA_EMAIL, VIA_PHONE, DONE,NEW,CODE_VERIFY
 from .serializers import SignUpSerializer
+from
 
 
 class SignUpView(APIView):
@@ -75,3 +76,19 @@ class VerifyCodeView(APIView):
 
         return Response({"success": True,"message": "Tasdiqlandi","tokens": {"refresh": str(refresh),"access": str(refresh.access_token),},},status=status.HTTP_200_OK,)
 
+
+class GetNewCodeView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        user = request.user
+        self.check_active_code(user)
+        if user.user_status == VIA_EMAIL:
+            print(f"code | {code}")
+
+    @staticmethot
+    def check_active_code(user):
+        code = user.objects.filter(is_active=False,expiration_time__gte=datetime.now())
+        if code.exists():
+            return ValidationError({"message":"Sizda hali aktiv cod bor "})
+
+        return True

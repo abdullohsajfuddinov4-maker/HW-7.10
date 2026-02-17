@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import CustomUser, VIA_EMAIL, VIA_PHONE
+from .models import CustomUser, VIA_EMAIL, VIA_PHONE ,NEW,DONE
 from baseapp.utility import check_email_or_phone
 
 
@@ -93,3 +93,12 @@ class UserChangeSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         instance.username = validated_data.get("username", instance.username)
+        instance.first_name = validated_data.get("first_name", instance.first_name)
+        instance.last_name = validated_data.get("last_name", instance.last_name)
+        if validated_data.get("password"):
+            instance.password = instance.set_password(validated_data.get("password"))
+        if instance.auth_status == NEW:
+            return ValidationError({"massage": "Siz tastiqlashdan otamdingiz"})
+
+        instance.auth_status = DONE
+        return instance
