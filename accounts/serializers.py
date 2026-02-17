@@ -71,3 +71,25 @@ class SignUpSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data["user_auth_type"] = getattr(instance, "_auth_type", None)
         return data
+
+class UserChangeSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    password = serializers.CharField()
+    confirm_password = serializers.CharField()
+
+    def validate(self, data):
+        password = data.get("password")
+        confirm_password = data.get("confirm_password")
+        if password != confirm_password:
+            raise ValidationError({"message": "parollar mos emas"})
+
+    def validate_username(self, username):
+        user = CustomUser.objects.filter(username=username).first()
+        if user:
+            return ValidationError({"massage": "Bu user allaqochon mavjut"})
+        return username
+
+    def update(self, instance, validated_data):
+        instance.username = validated_data.get("username", instance.username)
